@@ -139,6 +139,25 @@ public class PullAPIWrapper {
         }
     }
 
+    /**
+     * @param mq 从哪个消息队列拉取消息
+     * @param subExpression 消息过滤表达式
+     * @param expressionType 消息表达式类型 TAG\SQL92
+     * @param subVersion
+     * @param offset 消息拉取偏移量
+     * @param maxNums 本次拉取最大消息条目
+     * @param sysFlag 拉取系统标记
+     * @param commitOffset 当前messageQueue的消费进度（内存中）
+     * @param brokerSuspendMaxTimeMillis 消息拉取过程中允许broker挂起时间，默认15s
+     * @param timeoutMillis 消息拉取超时时间
+     * @param communicationMode 消息拉取模式，默认异步拉取
+     * @param pullCallback 从broker拉取消息后的回调逻辑
+     * @return
+     * @throws MQClientException
+     * @throws RemotingException
+     * @throws MQBrokerException
+     * @throws InterruptedException
+     */
     public PullResult pullKernelImpl(
         final MessageQueue mq,
         final String subExpression,
@@ -153,6 +172,10 @@ public class PullAPIWrapper {
         final CommunicationMode communicationMode,
         final PullCallback pullCallback
     ) throws MQClientException, RemotingException, MQBrokerException, InterruptedException {
+        /**
+         * 根据brokerName、brokerId从instance获取broker地址，在整个broker的部署结果中，相同名称的broker构成主从结构
+         * brokerId会不一样，每次拉取消息后，会给出一个简易，下次拉取从主节点还是从节点拉取
+         */
         FindBrokerResult findBrokerResult =
             this.mQClientFactory.findBrokerAddressInSubscribe(mq.getBrokerName(),
                 this.recalculatePullFromWhichNode(mq), false);
@@ -175,6 +198,7 @@ public class PullAPIWrapper {
             int sysFlagInner = sysFlag;
 
             if (findBrokerResult.isSlave()) {
+                // 如果是从节点，不提交offset
                 sysFlagInner = PullSysFlag.clearCommitOffsetFlag(sysFlagInner);
             }
 
@@ -193,9 +217,11 @@ public class PullAPIWrapper {
 
             String brokerAddr = findBrokerResult.getBrokerAddr();
             if (PullSysFlag.hasClassFilterFlag(sysFlagInner)) {
+                // 如果消息过滤模式为类模式，需要根据主题名称、broker地址找到注册在broker上的filterServer地址，从FilterServer上面拉取消息，否则从broker上面拉取消息
                 brokerAddr = computPullFromWhichFilterServer(mq.getTopic(), brokerAddr);
             }
 
+            // 拉取消息
             PullResult pullResult = this.mQClientFactory.getMQClientAPIImpl().pullMessage(
                 brokerAddr,
                 requestHeader,

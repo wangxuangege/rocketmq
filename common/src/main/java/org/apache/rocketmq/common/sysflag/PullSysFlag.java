@@ -22,6 +22,14 @@ public class PullSysFlag {
     private final static int FLAG_SUBSCRIPTION = 0x1 << 2;
     private final static int FLAG_CLASS_FILTER = 0x1 << 3;
 
+    /**
+     *
+     * @param commitOffset 表示内存读取的消费进度大于0，则设置该标记
+     * @param suspend 消息拉取时支持挂起
+     * @param subscription 消息过滤机制为表达式，则设置该标记
+     * @param classFilter 消息过滤机制为类过滤模式
+     * @return
+     */
     public static int buildSysFlag(final boolean commitOffset, final boolean suspend,
         final boolean subscription, final boolean classFilter) {
         int flag = 0;

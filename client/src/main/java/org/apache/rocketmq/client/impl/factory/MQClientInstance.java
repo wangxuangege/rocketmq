@@ -109,7 +109,12 @@ public class MQClientInstance {
         }
     });
     private final ClientRemotingProcessor clientRemotingProcessor;
+
+    /**
+     * 消息拉取服务
+     */
     private final PullMessageService pullMessageService;
+
     private final RebalanceService rebalanceService;
     private final DefaultMQProducer defaultMQProducer;
     private final ConsumerStatsManager consumerStatsManager;
@@ -952,6 +957,7 @@ public class MQClientInstance {
     }
 
     public void doRebalance() {
+        // 遍历已经注册的消费者，对消费者执行doRebalance
         for (Map.Entry<String, MQConsumerInner> entry : this.consumerTable.entrySet()) {
             MQConsumerInner impl = entry.getValue();
             if (impl != null) {

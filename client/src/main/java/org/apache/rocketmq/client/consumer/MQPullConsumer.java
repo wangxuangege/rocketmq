@@ -33,12 +33,14 @@ public interface MQPullConsumer extends MQConsumer {
     void start() throws MQClientException;
 
     /**
-     * Shutdown the consumer
+     * Shutdown the consumerubscribe
      */
     void shutdown();
 
     /**
      * Register the message queue listener
+     *
+     * 注册并发消息事件监昕器
      */
     void registerMessageQueueListener(final String topic, final MessageQueueListener listener);
 

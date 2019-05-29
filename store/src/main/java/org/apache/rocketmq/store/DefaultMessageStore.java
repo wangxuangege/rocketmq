@@ -436,6 +436,16 @@ public class DefaultMessageStore implements MessageStore {
         return commitLog;
     }
 
+    /**
+     *
+     * @param group Consumer group that launches this query. 消费分组
+     * @param topic Topic to query. 主题
+     * @param queueId Queue ID to query. 队列ID
+     * @param offset Logical offset to start from. 待拉取偏移量
+     * @param maxMsgNums Maximum count of messages to query. 最大拉取消息条目
+     * @param messageFilter Message filter used to screen desired messages. 消息过滤器
+     * @return
+     */
     public GetMessageResult getMessage(final String group, final String topic, final int queueId, final long offset,
         final int maxMsgNums,
         final MessageFilter messageFilter) {
@@ -460,9 +470,12 @@ public class DefaultMessageStore implements MessageStore {
 
         final long maxOffsetPy = this.commitLog.getMaxOffset();
 
+        // 根据主题和队列ID获取消费队列
         ConsumeQueue consumeQueue = findConsumeQueue(topic, queueId);
         if (consumeQueue != null) {
+            // 当前消息队列最小偏移量
             minOffset = consumeQueue.getMinOffsetInQueue();
+            // 当前消息队列最大偏移量
             maxOffset = consumeQueue.getMaxOffsetInQueue();
 
             if (maxOffset == 0) {

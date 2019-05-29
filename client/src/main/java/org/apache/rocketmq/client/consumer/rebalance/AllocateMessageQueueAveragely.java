@@ -25,6 +25,13 @@ import org.apache.rocketmq.common.message.MessageQueue;
 
 /**
  * Average Hashing queue algorithm
+ *
+ * 平均分配
+ *
+ * 举例说明：如果有8个消息队列q1-q8，有3个消费者c1-c3，根据该负载算法，消息分配如下：
+ * c1：q1-q3
+ * c2：q4-q6
+ * c3：q7-q8
  */
 public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrategy {
     private final InternalLogger log = ClientLogger.getLog();

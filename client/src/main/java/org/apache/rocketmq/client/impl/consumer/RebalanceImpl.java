@@ -42,6 +42,8 @@ import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
 /**
  * Base class for rebalance algorithm
+ *
+ * 消息队列复杂，通常的实现是一个消息队列在同一时间，只允许被一个消息消费者消费，一个消息消费者可以同时消费多个消息队列
  */
 public abstract class RebalanceImpl {
     protected static final InternalLogger log = ClientLogger.getLog();

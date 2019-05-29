@@ -44,33 +44,63 @@ public class ProcessQueue {
     private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("rocketmq.client.pull.pullMaxIdleTime", "120000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
-    private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
+
+    /**
+     *  消息存储容器
+     */
+    private final TreeMap<Long/*偏移量*/, MessageExt/*消息实体*/> msgTreeMap = new TreeMap<Long, MessageExt>();
+
     private final AtomicLong msgCount = new AtomicLong();
     private final AtomicLong msgSize = new AtomicLong();
     private final Lock lockConsume = new ReentrantLock();
+
     /**
      * A subset of msgTreeMap, will only be used when orderly consume
      */
     private final TreeMap<Long, MessageExt> consumingMsgOrderlyTreeMap = new TreeMap<Long, MessageExt>();
+
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
     private volatile long queueOffsetMax = 0L;
+
+    /**
+     * 当前ProcessQueue是否被丢弃
+     */
     private volatile boolean dropped = false;
+
+    /**
+     * 上一次开始消息拉取的时间戳
+     */
     private volatile long lastPullTimestamp = System.currentTimeMillis();
+
+    /**
+     * 上一次消息消费的时间戳
+     */
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
+
     private volatile boolean locked = false;
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;
     private volatile long msgAccCnt = 0;
 
+    /**
+     * 判断锁是否过期，锁超时时间默认30s
+     * @return
+     */
     public boolean isLockExpired() {
         return (System.currentTimeMillis() - this.lastLockTimestamp) > REBALANCE_LOCK_MAX_LIVE_TIME;
     }
 
+    /**
+     * 判断PullMessageService是否空闲，默认120s
+     * @return
+     */
     public boolean isPullExpired() {
         return (System.currentTimeMillis() - this.lastPullTimestamp) > PULL_MAX_IDLE_TIME;
     }
 
     /**
+     * 移除消费超时的超时，默认超过15分钟未消费的消息将延迟3个延迟级别再消费
+     *
      * @param pushConsumer
      */
     public void cleanExpiredMsg(DefaultMQPushConsumer pushConsumer) {
@@ -123,6 +153,12 @@ public class ProcessQueue {
         }
     }
 
+    /**
+     * 添加消息
+     *
+     * @param msgs
+     * @return
+     */
     public boolean putMessage(final List<MessageExt> msgs) {
         boolean dispatchToConsume = false;
         try {
@@ -164,6 +200,13 @@ public class ProcessQueue {
         return dispatchToConsume;
     }
 
+    /**
+     * 获取当前消息最大间隔
+     *
+     * getMaxSpan()/20并不能说明ProcessQueue中包含的消息个数，但是能够说明当前处理队列第一条消息与最后一条消息的偏移量已经超过的消息个数
+     *
+     * @return
+     */
     public long getMaxSpan() {
         try {
             this.lockTreeMap.readLock().lockInterruptibly();
@@ -181,6 +224,12 @@ public class ProcessQueue {
         return 0;
     }
 
+    /**
+     * 移除消息
+     *
+     * @param msgs
+     * @return
+     */
     public long removeMessage(final List<MessageExt> msgs) {
         long result = -1;
         final long now = System.currentTimeMillis();

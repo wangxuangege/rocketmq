@@ -64,6 +64,9 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Consumers of the same role is required to have exactly same subscriptions and consumerGroup to correctly achieve
      * load balance. It's required and needs to be globally unique.
+     *
+     * 消费者分组
+     *
      * </p>
      *
      * See <a href="http://rocketmq.apache.org/docs/core-concept/">here</a> for further discussion.
@@ -72,6 +75,11 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Message model defines the way how messages are delivered to each consumer clients.
+     *
+     * 消息模式：广播、集群
+     *
+     * 广播模式消费位点记录在客户端，集群模式消费位点记录在broker端
+     *
      * </p>
      *
      * RocketMQ supports two message models: clustering and broadcasting. If clustering is set, consumer clients with
@@ -86,6 +94,12 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Consuming point on consumer booting.
+     *
+     * 根据消息进度从消息服务器拉取不到消息时重新计算消费策略
+     *
+     * PS:如果从消息进度服务OffsetStore 读取到MessageQueue中的偏移量不小于0 ，则
+     * 使用读取到的偏移量，只有在读到的偏移量小于0 时，策略才会生效
+     *
      * </p>
      *
      * There are three consuming points:
@@ -127,31 +141,45 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Queue allocation algorithm specifying how message queues are allocated to each consumer clients.
+     *
+     * 消息分发策略
      */
     private AllocateMessageQueueStrategy allocateMessageQueueStrategy;
 
     /**
      * Subscription relationship
+     *
+     * 订阅信息
      */
     private Map<String /* topic */, String /* sub expression */> subscription = new HashMap<String, String>();
 
     /**
      * Message listener
+     *
+     * 消息业务监听器
+     *
      */
     private MessageListener messageListener;
 
     /**
      * Offset Storage
+     *
+     * 消息消费进度存储器
      */
     private OffsetStore offsetStore;
 
     /**
      * Minimum consumer thread number
+     *
+     * 消息者最小线程数
      */
     private int consumeThreadMin = 20;
 
     /**
      * Max consumer thread number
+     *
+     * 消费者最大线程数，由于消费者线程池使用无界队列，
+     * 故消费者线程个数其实最多只有consumeThreadMin 个
      */
     private int consumeThreadMax = 64;
 
@@ -162,12 +190,17 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Concurrently max span offset.it has no effect on sequential consumption
+     *
+     * 并发消息消费时处理队列最大跨度，默认2000 ,表示如果消息处理队列中偏移量最大的消息与偏移量最小的
+     * 消息的跨度超过2000则延迟到毫秒后再拉取消息
      */
     private int consumeConcurrentlyMaxSpan = 2000;
 
     /**
      * Flow control threshold on queue level, each message queue will cache at most 1000 messages by default,
      * Consider the {@code pullBatchSize}, the instantaneous value may exceed the limit
+     *
+     * 每1000次流控后打印流控日志
      */
     private int pullThresholdForQueue = 1000;
 
@@ -204,21 +237,29 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Message pull Interval
+     *
+     * 推模式下拉取任务间隔时间，默认一次拉取任务完成继续拉取
      */
     private long pullInterval = 0;
 
     /**
      * Batch consumption size
+     *
+     * 消息并发消费时一次消费消息条数，通俗点说就是每次传入message listen的消息条数
      */
     private int consumeMessageBatchMaxSize = 1;
 
     /**
      * Batch pull size
+     *
+     * 每次消息拉取所拉取的条数，默认32条
      */
     private int pullBatchSize = 32;
 
     /**
      * Whether update subscription relationship when every pull
+     *
+     * 是否每次拉取消息都更新订阅信息，默认为false
      */
     private boolean postSubscriptionWhenPull = false;
 
@@ -229,6 +270,10 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Max re-consume times. -1 means 16 times.
+     *
+     * 最大消费重试次数。如果消息消费次数超过maxReconsumeTimes
+     * 还未成功，则将该消息转移到一个失败队列，等待被删除
+     *
      * </p>
      *
      * If messages are re-consumed more than {@link #maxReconsumeTimes} before success, it's be directed to a deletion
@@ -238,6 +283,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Suspending pulling time for cases requiring slow pulling like flow-control scenario.
+     *
+     * 延迟将该队列的消息提交到消费者线程的等待时间
      */
     private long suspendCurrentQueueTimeMillis = 1000;
 
