@@ -198,6 +198,11 @@ public class IndexService {
         return topic + "#" + key;
     }
 
+    /**
+     * 构建索引
+     *
+     * @param req
+     */
     public void buildIndex(DispatchRequest req) {
         IndexFile indexFile = retryGetAndCreateIndexFile();
         if (indexFile != null) {
@@ -205,6 +210,7 @@ public class IndexService {
             DispatchRequest msg = req;
             String topic = msg.getTopic();
             String keys = msg.getKeys();
+            // 若消息的物理偏移量小于索引文件的偏移，说明是重复数据，忽略本次构建
             if (msg.getCommitLogOffset() < endPhyOffset) {
                 return;
             }

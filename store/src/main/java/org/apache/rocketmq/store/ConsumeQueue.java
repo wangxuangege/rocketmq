@@ -24,6 +24,13 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.store.config.StorePathConfigHelper;
 
+/**
+ * 单个ConsumeQueue 文件中默认包含30 万个条目，单个文件的长度为30w × 20 字节，
+ * 单个ConsumeQueue 文件可以看出是一个ConsumeQueue 条目的数组，其下标为ConsumeQueue
+ * 的逻辑偏移量，消息消费进度存储的偏移量即逻辑偏移量。ConsumeQueue 即为
+ * Commitlog 文件的索引文件， 其构建机制是当消息到达Commitlog 文件后， 由专门的线程
+ * 产生消息转发任务，从而构建消息消费队列文件与下文提到的索引文件
+ */
 public class ConsumeQueue {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
@@ -151,7 +158,16 @@ public class ConsumeQueue {
         }
     }
 
+    /**
+     * 根据消息存储时间查找
+     *
+     * 二分查找
+     *
+     * @param timestamp
+     * @return
+     */
     public long getOffsetInQueueByTime(final long timestamp) {
+        // 根据时间戳定位到物理文件
         MappedFile mappedFile = this.mappedFileQueue.getMappedFileByTime(timestamp);
         if (mappedFile != null) {
             long offset = 0;
@@ -482,16 +498,26 @@ public class ConsumeQueue {
         }
     }
 
+    /**
+     * 根据startIndex获取消息消费队列条目
+     *
+     * @param startIndex
+     * @return
+     */
     public SelectMappedBufferResult getIndexBuffer(final long startIndex) {
         int mappedFileSize = this.mappedFileSize;
+        // 在consumequeue中的物理偏移
         long offset = startIndex * CQ_STORE_UNIT_SIZE;
         if (offset >= this.getMinLogicOffset()) {
+            // 获取
             MappedFile mappedFile = this.mappedFileQueue.findMappedFileByOffset(offset);
             if (mappedFile != null) {
+                // 然后连续读出20个字节即可
                 SelectMappedBufferResult result = mappedFile.selectMappedBuffer((int) (offset % mappedFileSize));
                 return result;
             }
         }
+        // 消息已经被删除
         return null;
     }
 

@@ -19,11 +19,25 @@ package org.apache.rocketmq.store;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class ReferenceResource {
+
+    // 引用计数,>0可用，<=0不可用
     protected final AtomicLong refCount = new AtomicLong(1);
+
+    // 是否可用
     protected volatile boolean available = true;
+
+    // 是否清理干净
     protected volatile boolean cleanupOver = false;
+
+    // 第一次shutdown时间
     private volatile long firstShutdownTimestamp = 0;
 
+    /**
+     * 和release函数搭配使用
+     * 占用资源,refCount + 1
+     *
+     * @return
+     */
     public synchronized boolean hold() {
         if (this.isAvailable()) {
             if (this.refCount.getAndIncrement() > 0) {
@@ -40,6 +54,13 @@ public abstract class ReferenceResource {
         return this.available;
     }
 
+    /**
+     * 参数 intervalForcibly 代表强制间隔，即两次生效的间隔至少要有这么大(不是至多!!!)
+     * 第一次调用时available设置为false，设置初始时间，释放一个引用
+     * 之后再调用的时候，如果refCount > 0,且超过了强制间隔，则设置为一个负数，释放一个引用
+     *
+     * 备注：如果在intervalForcibly时间内再次shutdown 代码不会执行任何逻辑
+     */
     public void shutdown(final long intervalForcibly) {
         if (this.available) {
             this.available = false;
@@ -53,6 +74,11 @@ public abstract class ReferenceResource {
         }
     }
 
+    /**
+     * 和hold函数搭配
+     * 释放一个引用，计数-1
+     * 若计数 <=0，则调用cleanup，子类实现
+     */
     public void release() {
         long value = this.refCount.decrementAndGet();
         if (value > 0)
