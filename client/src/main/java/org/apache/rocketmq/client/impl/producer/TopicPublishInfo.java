@@ -24,10 +24,27 @@ import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 
 public class TopicPublishInfo {
+
+    /**
+     * 是否是顺序消息
+     */
     private boolean orderTopic = false;
+
+    /**
+     *
+     */
     private boolean haveTopicRouterInfo = false;
+
+    /**
+     * 主题队列的消息队列
+     */
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
+
+    /**
+     * 没选择一次消息队列，值+1,，用于轮询
+     */
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
+
     private TopicRouteData topicRouteData;
 
     public boolean isOrderTopic() {
@@ -66,6 +83,11 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
+    /**
+     *
+     * @param lastBrokerName 上一次发送失败的broker
+     * @return
+     */
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
@@ -76,6 +98,7 @@ public class TopicPublishInfo {
                 if (pos < 0)
                     pos = 0;
                 MessageQueue mq = this.messageQueueList.get(pos);
+                // 跳过上次发送失败的broker
                 if (!mq.getBrokerName().equals(lastBrokerName)) {
                     return mq;
                 }

@@ -95,6 +95,8 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Maximum number of retry to perform internally before claiming sending failure in synchronous mode.
+     *
+     * 同步方式发送消息重试次数，默认为2 ，总共执行3 次
      * </p>
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
@@ -103,6 +105,8 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Maximum number of retry to perform internally before claiming sending failure in asynchronous mode.
+     *
+     * 异步方式发送消息重试次数，默认为2
      * </p>
      *
      * This may potentially cause message duplication which is up to application developers to resolve.
@@ -111,11 +115,15 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Indicate whether to retry another broker on sending failure internally.
+     *
+     * 消息重试时选择另外一个Broker时，是否不等待存储结果就返回， 默认为fa lse
      */
     private boolean retryAnotherBrokerWhenNotStoreOK = false;
 
     /**
      * Maximum allowed message size in bytes.
+     *
+     * 允许发送的最大消息长度，默认为4M ，最大值为2^32-1
      */
     private int maxMessageSize = 1024 * 1024 * 4; // 4M
 

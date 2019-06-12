@@ -72,6 +72,8 @@ public class LatencyFaultToleranceImpl implements LatencyFaultTolerance<String> 
         }
 
         if (!tmpList.isEmpty()) {
+
+            // 防止处于同样的不可用状态，随机选择其中一个（如果不做shuffle的话，每次选择的都是那一个）
             Collections.shuffle(tmpList);
 
             Collections.sort(tmpList);
@@ -80,6 +82,7 @@ public class LatencyFaultToleranceImpl implements LatencyFaultTolerance<String> 
             if (half <= 0) {
                 return tmpList.get(0).getName();
             } else {
+                // 选择前一半稍微好点的不可用状态的broker节点
                 final int i = this.whichItemWorst.getAndIncrement() % half;
                 return tmpList.get(i).getName();
             }
