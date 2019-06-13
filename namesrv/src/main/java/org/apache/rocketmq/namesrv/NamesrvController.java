@@ -77,6 +77,7 @@ public class NamesrvController {
 
         this.kvConfigManager.load();
 
+        // 创建网络通信处理对象
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
         this.remotingExecutor =
@@ -88,6 +89,7 @@ public class NamesrvController {
 
             @Override
             public void run() {
+                // 间隔10s扫描broker，移除处于不激活状态的broker
                 NamesrvController.this.routeInfoManager.scanNotActiveBroker();
             }
         }, 5, 10, TimeUnit.SECONDS);
@@ -96,10 +98,14 @@ public class NamesrvController {
 
             @Override
             public void run() {
+                // 每个10min打印一次kv配置
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
             }
         }, 1, 10, TimeUnit.MINUTES);
 
+        /**
+         * 初始化TLS配置监听线程FileWatchService，当TLS证书或密码文件有修改时，通过HASH码校验重载配置
+         */
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
             try {
