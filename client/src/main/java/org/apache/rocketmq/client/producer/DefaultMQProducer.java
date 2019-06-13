@@ -80,16 +80,22 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
 
     /**
      * Number of queues to create per default topic.
+     *
+     * 默认主题在每一个broker队列数量
      */
     private volatile int defaultTopicQueueNums = 4;
 
     /**
      * Timeout for sending messages.
+     *
+     * 发送消息默认超时时间，默认3s
      */
     private int sendMsgTimeout = 3000;
 
     /**
      * Compress message body threshold, namely, message body larger than 4k will be compressed on default.
+     *
+     * 消息体超过该值后则启用压缩，默认4k
      */
     private int compressMsgBodyOverHowmuch = 1024 * 4;
 
@@ -116,7 +122,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
     /**
      * Indicate whether to retry another broker on sending failure internally.
      *
-     * 消息重试时选择另外一个Broker时，是否不等待存储结果就返回， 默认为fa lse
+     * 消息重试时选择另外一个Broker时，是否不等待存储结果就返回， 默认为false
      */
     private boolean retryAnotherBrokerWhenNotStoreOK = false;
 

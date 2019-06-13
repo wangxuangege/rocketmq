@@ -49,7 +49,7 @@ public class MQClientManager {
      * instance 设置为进程ID ，这样避免了不同进程的相互影响，但同一个JVM 中的不同消费
      * 者和不同生产者在启动时获取到的MQClientlnstane 实例都是同一个。根据后面的介绍，
      * MQClientlnstance 封装了RocketMQ 网络处理API ，是消息生产者（ Producer ）、消息消费者
-     * ( Consumer ）与NameServ町、Broker 打交道的网络通道
+     * ( Consumer ）与NameServer、Broker 打交道的网络通道
      *
      * @param clientConfig
      * @param rpcHook

@@ -645,6 +645,12 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             null).setResponseCode(ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION);
     }
 
+    /**
+     * 获取topic路由信息
+     * 
+     * @param topic
+     * @return
+     */
     private TopicPublishInfo tryToFindTopicPublishInfo(final String topic) {
         TopicPublishInfo topicPublishInfo = this.topicPublishInfoTable.get(topic);
         if (null == topicPublishInfo || !topicPublishInfo.ok()) {
@@ -657,9 +663,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         if (topicPublishInfo.isHaveTopicRouterInfo() || topicPublishInfo.ok()) {
             return topicPublishInfo;
         } else {
-            /**
-             * 第一次发送消息时，本地没有缓存路由信息，查询NameServer，路由信息没有找到，再次尝试使用默认主题去查询
-             */
+            // namesrv没有topic路由信息，再次考虑DefaultMQProducerlmpl#createTopicKey取获取，若broker上面autoCreateTopicEnable=true，会获取到，否则会抛出无法找到topic异常
             this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic, true, this.defaultMQProducer);
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
             return topicPublishInfo;
