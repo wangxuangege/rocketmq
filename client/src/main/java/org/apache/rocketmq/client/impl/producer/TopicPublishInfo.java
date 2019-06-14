@@ -41,7 +41,7 @@ public class TopicPublishInfo {
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
 
     /**
-     * 没选择一次消息队列，值+1,，用于轮询
+     * 每选择一次消息队列，值+1,，用于轮询
      */
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
 
@@ -92,11 +92,13 @@ public class TopicPublishInfo {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
         } else {
+            // 自增选择下一个
             int index = this.sendWhichQueue.getAndIncrement();
             for (int i = 0; i < this.messageQueueList.size(); i++) {
                 int pos = Math.abs(index++) % this.messageQueueList.size();
                 if (pos < 0)
                     pos = 0;
+                // 同一个brokerName的多个queue，可能都会失败，因此跳过去
                 MessageQueue mq = this.messageQueueList.get(pos);
                 // 跳过上次发送失败的broker
                 if (!mq.getBrokerName().equals(lastBrokerName)) {

@@ -59,20 +59,22 @@ public class MQFaultStrategy {
         if (this.sendLatencyFaultEnable) {
             // 开启broker故障延迟机制
             try {
+                // 下一个
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                    // 检测下一个broker是否可用（broker发送异常，会登记一端时间不可用）
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
-                        // 遍历可用的broker，找到则返回
+                        // TODO:感觉这边条件写反了，或者没有必要判断
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
                 }
 
-                // 可能所有的都在故障延迟范围内，那么选择一个稍微好点的
+                // 尝试从规避的broker中选择一个可用的broker，没有找到的话，返回null
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
@@ -83,7 +85,6 @@ public class MQFaultStrategy {
                     }
                     return mq;
                 } else {
-                    // 如果可用，那么表明broker已经恢复
                     latencyFaultTolerance.remove(notBestBroker);
                 }
             } catch (Exception e) {

@@ -620,6 +620,7 @@ public class MQClientInstance {
                         TopicRouteData old = this.topicRouteTable.get(topic);
                         boolean changed = topicRouteDataIsChange(old, topicRouteData);
                         if (!changed) {
+                            // 若原来的producerTable和consumerTable不存在topic完备的信息，则同样需要更新
                             changed = this.isNeedUpdateTopicRouteInfo(topic);
                         } else {
                             log.info("the topic[{}] route info changed, old[{}] ,new[{}]", topic, old, topicRouteData);
